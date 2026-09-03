@@ -1,0 +1,10 @@
+target/
+**/*.rs.bk
+*.wasm
+.env
+.env.*
+!.env.example
+.DS_Store
+.soroban/
+deployments/*.json
+!deployments/.gitkeep
