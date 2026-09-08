@@ -66,7 +66,7 @@ impl InstitutionRegistry {
         caller.require_auth();
         Self::require_init(&env)?;
 
-        if name.len() == 0 || name.len() > MAX_NAME_LEN || country.len() != COUNTRY_LEN {
+        if name.is_empty() || name.len() > MAX_NAME_LEN || country.len() != COUNTRY_LEN {
             return Err(RegistryError::InvalidMetadata);
         }
         let key = DataKey::Institution(caller.clone());

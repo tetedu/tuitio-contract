@@ -6,6 +6,6 @@ target/
 !.env.example
 .DS_Store
 .soroban/
-deployments/*.json
-!deployments/.gitkeep
+deployments/*local*.json
+!deployments/testnet.json
 test_snapshots/
