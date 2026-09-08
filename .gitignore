@@ -8,3 +8,4 @@ target/
 .soroban/
 deployments/*.json
 !deployments/.gitkeep
+test_snapshots/
