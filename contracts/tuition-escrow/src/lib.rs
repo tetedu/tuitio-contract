@@ -120,7 +120,7 @@ impl TuitionEscrow {
 
         token::TokenClient::new(&env, &token_id).transfer(
             &sponsor,
-            &env.current_contract_address(),
+            env.current_contract_address(),
             &total,
         );
 

@@ -1,4 +1,6 @@
 #![cfg(test)]
+// Constants group digits to mirror USDC's 7-decimal precision (50_0000000 = 50 USDC).
+#![allow(clippy::inconsistent_digit_grouping)]
 
 use super::*;
 use institution_registry::{InstitutionRegistry, InstitutionRegistryClient};
@@ -305,7 +307,10 @@ fn release_pays_the_school_not_the_student() {
         TERM_AMOUNT * i128::from(TERMS - 1)
     );
     assert_eq!(f.escrow.get_grant(&grant_id).next_term, 1);
-    assert_eq!(f.escrow.get_term(&grant_id, &0).status, TermStatus::Released);
+    assert_eq!(
+        f.escrow.get_term(&grant_id, &0).status,
+        TermStatus::Released
+    );
 }
 
 #[test]
@@ -350,7 +355,10 @@ fn full_lifecycle_completes_the_grant() {
     let grant = f.escrow.get_grant(&grant_id);
     assert_eq!(grant.status, GrantStatus::Completed);
     assert_eq!(grant.next_term, TERMS);
-    assert_eq!(f.token.balance(&f.school_payout), TERM_AMOUNT * i128::from(TERMS));
+    assert_eq!(
+        f.token.balance(&f.school_payout),
+        TERM_AMOUNT * i128::from(TERMS)
+    );
     assert_eq!(f.token.balance(&f.escrow.address), 0);
     assert_eq!(f.escrow.locked_amount(&grant_id), 0);
 }
@@ -396,7 +404,10 @@ fn dispute_freezes_the_term() {
 
     f.escrow.dispute_term(&grant_id, &0);
 
-    assert_eq!(f.escrow.get_term(&grant_id, &0).status, TermStatus::Disputed);
+    assert_eq!(
+        f.escrow.get_term(&grant_id, &0).status,
+        TermStatus::Disputed
+    );
 
     // Even after the window elapses, a disputed term cannot be released.
     f.advance(WINDOW + 1);
@@ -447,8 +458,14 @@ fn resolving_for_the_school_pays_out_and_advances() {
     f.escrow.resolve_dispute(&grant_id, &0, &true);
 
     assert_eq!(f.token.balance(&f.school_payout), TERM_AMOUNT);
-    assert_eq!(f.token.balance(&f.sponsor), SPONSOR_FUNDING - TERM_AMOUNT * i128::from(TERMS));
-    assert_eq!(f.escrow.get_term(&grant_id, &0).status, TermStatus::Released);
+    assert_eq!(
+        f.token.balance(&f.sponsor),
+        SPONSOR_FUNDING - TERM_AMOUNT * i128::from(TERMS)
+    );
+    assert_eq!(
+        f.escrow.get_term(&grant_id, &0).status,
+        TermStatus::Released
+    );
     assert_eq!(f.escrow.get_grant(&grant_id).next_term, 1);
 }
 
@@ -464,7 +481,10 @@ fn resolving_for_the_sponsor_refunds_and_advances() {
 
     assert_eq!(f.token.balance(&f.school_payout), 0);
     assert_eq!(f.token.balance(&f.sponsor), after_funding + TERM_AMOUNT);
-    assert_eq!(f.escrow.get_term(&grant_id, &0).status, TermStatus::Refunded);
+    assert_eq!(
+        f.escrow.get_term(&grant_id, &0).status,
+        TermStatus::Refunded
+    );
     // A refunded term still consumes its slot; the grant moves on.
     assert_eq!(f.escrow.get_grant(&grant_id).next_term, 1);
 }
@@ -531,12 +551,7 @@ fn cancel_is_refused_while_a_claim_is_open() {
     let grant_id = f.create();
     f.escrow.attest_term(&grant_id, &0);
 
-    let err = f
-        .escrow
-        .try_cancel_grant(&grant_id)
-        .err()
-        .unwrap()
-        .unwrap();
+    let err = f.escrow.try_cancel_grant(&grant_id).err().unwrap().unwrap();
     assert_eq!(err, EscrowError::SettlementInFlight);
 }
 
@@ -547,12 +562,7 @@ fn cancel_is_refused_while_a_dispute_is_open() {
     f.escrow.attest_term(&grant_id, &0);
     f.escrow.dispute_term(&grant_id, &0);
 
-    let err = f
-        .escrow
-        .try_cancel_grant(&grant_id)
-        .err()
-        .unwrap()
-        .unwrap();
+    let err = f.escrow.try_cancel_grant(&grant_id).err().unwrap().unwrap();
     assert_eq!(err, EscrowError::SettlementInFlight);
 }
 
@@ -561,12 +571,7 @@ fn cancel_cannot_run_twice() {
     let f = setup();
     let grant_id = f.create();
     f.escrow.cancel_grant(&grant_id);
-    let err = f
-        .escrow
-        .try_cancel_grant(&grant_id)
-        .err()
-        .unwrap()
-        .unwrap();
+    let err = f.escrow.try_cancel_grant(&grant_id).err().unwrap().unwrap();
     assert_eq!(err, EscrowError::GrantNotActive);
 }
 
@@ -578,12 +583,7 @@ fn cancelling_a_completed_grant_is_refused() {
         f.attest_and_wait(grant_id, term);
         f.escrow.release_term(&grant_id, &term);
     }
-    let err = f
-        .escrow
-        .try_cancel_grant(&grant_id)
-        .err()
-        .unwrap()
-        .unwrap();
+    let err = f.escrow.try_cancel_grant(&grant_id).err().unwrap().unwrap();
     assert_eq!(err, EscrowError::GrantNotActive);
 }
 
