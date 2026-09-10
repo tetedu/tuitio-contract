@@ -4,16 +4,16 @@ Three repositories make up Tuitio:
 
 | Repo | Stack | Role |
 |---|---|---|
-| [tuitio-contract](https://github.com/adelekevictor12/tuitio-contract) | Rust / Soroban SDK 27 | the two contracts |
-| [tuitio-backend](https://github.com/adelekevictor12/tuitio-backend) | Go 1.25 / Postgres | event indexer + REST API |
-| [tuitio-frontend](https://github.com/adelekevictor12/tuitio-frontend) | Next.js 16 / TypeScript | web app + wallet actions |
+| [tuitio-contract](https://github.com/tetedu/tuitio-contract) | Rust / Soroban SDK 27 | the two contracts |
+| [tuitio-backend](https://github.com/tetedu/tuitio-backend) | Go 1.25 / Postgres | event indexer + REST API |
+| [tuitio-frontend](https://github.com/tetedu/tuitio-frontend) | Next.js 16 / TypeScript | web app + wallet actions |
 
 ## Local setup
 
 Contracts (Rust 1.96+, `wasm32v1-none`, Stellar CLI 27+):
 
 ```bash
-git clone https://github.com/adelekevictor12/tuitio-contract
+git clone https://github.com/tetedu/tuitio-contract
 cd tuitio-contract
 cargo test               # 52 tests
 stellar contract build
@@ -23,10 +23,10 @@ Backend + frontend, zero provisioning (embedded Postgres, testnet indexer,
 API, web app):
 
 ```bash
-git clone https://github.com/adelekevictor12/tuitio-backend
+git clone https://github.com/tetedu/tuitio-backend
 cd tuitio-backend && go run ./cmd/devstack   # API on :8080
 
-git clone https://github.com/adelekevictor12/tuitio-frontend
+git clone https://github.com/tetedu/tuitio-frontend
 cd tuitio-frontend
 pnpm install
 cp .env.example .env.local                   # NEXT_PUBLIC_API_URL=http://localhost:8080
@@ -51,7 +51,7 @@ pnpm dev                                     # web app on :3000
 `NEXT_PUBLIC_NETWORK_PASSPHRASE`, `NEXT_PUBLIC_REGISTRY_CONTRACT`,
 `NEXT_PUBLIC_ESCROW_CONTRACT`, `NEXT_PUBLIC_TOKEN_CONTRACT`,
 `NEXT_PUBLIC_TOKEN_SYMBOL`, `NEXT_PUBLIC_TOKEN_DECIMALS` (see
-[.env.example](https://github.com/adelekevictor12/tuitio-frontend/blob/main/.env.example)).
+[.env.example](https://github.com/tetedu/tuitio-frontend/blob/main/.env.example)).
 
 ## REST API
 
@@ -106,7 +106,7 @@ stellar contract invoke --id CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SE
 
 From TypeScript, the frontend uses the stellar-sdk contract `Client` with
 Freighter signing — see
-[lib/contracts.ts](https://github.com/adelekevictor12/tuitio-frontend/blob/main/lib/contracts.ts).
+[lib/contracts.ts](https://github.com/tetedu/tuitio-frontend/blob/main/lib/contracts.ts).
 
 ## Deploying the contracts
 
