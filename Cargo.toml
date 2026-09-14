@@ -9,7 +9,7 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0"
-repository = "https://github.com/adelekevictor12/tuitio-contract"
+repository = "https://github.com/tetedu/tuitio-contract"
 
 [workspace.dependencies]
 soroban-sdk = "27.0.6"
