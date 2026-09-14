@@ -51,8 +51,27 @@ Pending ──attest──▶ Attested ──(dispute window closes)──▶ Re
 
 | Contract | Address |
 |---|---|
-| institution-registry | [`CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV`](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV) |
-| tuition-escrow | [`CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW`](https://stellar.expert/explorer/testnet/contract/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW) |
+| institution-registry | `CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV` |
+| tuition-escrow | `CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW` |
+
+Verify them on-chain:
+
+- Raw indexer data (JSON, no JavaScript required) —
+  [registry](https://api.stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+  ·
+  [escrow](https://api.stellar.expert/explorer/testnet/contract/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW)
+- Block explorers —
+  [StellarChain registry](https://testnet.stellarchain.io/contracts/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+  ·
+  [StellarChain escrow](https://testnet.stellarchain.io/contracts/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW)
+  ·
+  [StellarExpert registry](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+- Or query them directly:
+
+```bash
+stellar contract invoke --id CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV \
+  --source-account <your-key> --network testnet -- count
+```
 
 Deployments are recorded in [`deployments/`](deployments/).
 
