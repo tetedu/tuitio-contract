@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/tetedu/tuitio-contract/actions/workflows/ci.yml/badge.svg)](https://github.com/tetedu/tuitio-contract/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Network](https://img.shields.io/badge/network-Stellar%20testnet-7d00ff)](https://stellar.expert/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+[![Network](https://img.shields.io/badge/network-Stellar%20testnet-7d00ff)](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
 
 **Soroban contracts that hold a student's tuition in escrow and release it to a verified institution, one academic term at a time.**
 
@@ -51,8 +51,8 @@ Pending ──attest──▶ Attested ──(dispute window closes)──▶ Re
 
 | Contract | Address |
 |---|---|
-| institution-registry | [`CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV`](https://stellar.expert/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV) |
-| tuition-escrow | [`CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW`](https://stellar.expert/testnet/contract/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW) |
+| institution-registry | [`CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV`](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV) |
+| tuition-escrow | [`CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW`](https://stellar.expert/explorer/testnet/contract/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW) |
 
 Deployments are recorded in [`deployments/`](deployments/).
 
