@@ -32,6 +32,8 @@ mod registry;
 mod types;
 
 #[cfg(test)]
+mod property_test;
+#[cfg(test)]
 mod test;
 
 pub use errors::EscrowError;
