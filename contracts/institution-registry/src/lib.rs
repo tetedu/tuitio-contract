@@ -20,9 +20,9 @@ mod types;
 mod test;
 
 pub use errors::RegistryError;
-pub use types::{DataKey, Institution, InstitutionStatus, COUNTRY_LEN, MAX_NAME_LEN};
+pub use types::{DataKey, Institution, InstitutionStatus, COUNTRY_LEN, MAX_NAME_LEN, MAX_PAGE};
 
-use soroban_sdk::{contract, contractimpl, Address, Env, String};
+use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
 
 /// Ledgers produced in roughly one day at ~5s close time.
 const DAY_IN_LEDGERS: u32 = 17_280;
@@ -87,7 +87,16 @@ impl InstitutionRegistry {
             .persistent()
             .extend_ttl(&key, ENTRY_TTL_THRESHOLD, ENTRY_TTL_EXTEND);
 
+        // Record the registration position so `list` can page through the
+        // registry. Positions are append-only and never reused, so a page
+        // taken now stays stable as more institutions register.
         let count: u32 = env.storage().instance().get(&DataKey::Count).unwrap_or(0);
+        let position = DataKey::InstitutionAt(count);
+        env.storage().persistent().set(&position, &caller);
+        env.storage()
+            .persistent()
+            .extend_ttl(&position, ENTRY_TTL_THRESHOLD, ENTRY_TTL_EXTEND);
+
         env.storage().instance().set(&DataKey::Count, &(count + 1));
         Self::bump_instance(&env);
 
@@ -201,6 +210,36 @@ impl InstitutionRegistry {
             Ok(record) => record.status == InstitutionStatus::Verified,
             Err(_) => false,
         }
+    }
+
+    /// Returns institution addresses in registration order.
+    ///
+    /// `start` is a registration position, not an id: position 0 is the first
+    /// institution that ever registered. Pages are stable because positions
+    /// are append-only. A `start` past the end returns an empty vector rather
+    /// than an error, so a caller can page until the result is short.
+    ///
+    /// `limit` is clamped to [`MAX_PAGE`] so one call cannot exceed the
+    /// ledger's read budget.
+    pub fn list(env: Env, start: u32, limit: u32) -> Vec<Address> {
+        let total: u32 = env.storage().instance().get(&DataKey::Count).unwrap_or(0);
+        let mut page = Vec::new(&env);
+        if start >= total || limit == 0 {
+            return page;
+        }
+        let capped = if limit > MAX_PAGE { MAX_PAGE } else { limit };
+        let end = core::cmp::min(start.saturating_add(capped), total);
+
+        for position in start..end {
+            let key = DataKey::InstitutionAt(position);
+            if let Some(address) = env.storage().persistent().get::<_, Address>(&key) {
+                env.storage()
+                    .persistent()
+                    .extend_ttl(&key, ENTRY_TTL_THRESHOLD, ENTRY_TTL_EXTEND);
+                page.push_back(address);
+            }
+        }
+        page
     }
 
     /// Number of institutions ever registered, verified or not.
