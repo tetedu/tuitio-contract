@@ -6,7 +6,7 @@ use super::*;
 use institution_registry::{InstitutionRegistry, InstitutionRegistryClient};
 use soroban_sdk::{
     testutils::{Address as _, Events as _, Ledger as _},
-    token, Address, Env, String,
+    token, vec, Address, Env, String,
 };
 
 /// One academic term, priced in USDC's 7 decimals. 50.0000000 USDC.
@@ -685,4 +685,155 @@ fn initialize_emits_a_genesis_event() {
         1,
         "initialize should publish exactly one genesis event"
     );
+}
+
+// ----- batch sweep ----------------------------------------------------------
+
+#[test]
+fn sweep_settles_every_due_term() {
+    let f = setup();
+    let a = f.create();
+    let b = f.create();
+    f.escrow.attest_term(&a, &0);
+    f.escrow.attest_term(&b, &0);
+    f.advance(WINDOW + 1);
+
+    let released = f.escrow.sweep(&vec![&f.env, a, b]);
+
+    assert_eq!(released, 2);
+    assert_eq!(f.token.balance(&f.school_payout), TERM_AMOUNT * 2);
+    assert_eq!(f.escrow.get_term(&a, &0).status, TermStatus::Released);
+    assert_eq!(f.escrow.get_term(&b, &0).status, TermStatus::Released);
+    assert_eq!(f.escrow.get_grant(&a).next_term, 1);
+}
+
+#[test]
+fn sweep_skips_terms_still_inside_their_window() {
+    let f = setup();
+    let due = f.create();
+    let fresh = f.create();
+    f.escrow.attest_term(&due, &0);
+    f.advance(WINDOW + 1);
+    // Attested after the clock moved, so this one is still disputable.
+    f.escrow.attest_term(&fresh, &0);
+
+    let released = f.escrow.sweep(&vec![&f.env, due, fresh]);
+
+    assert_eq!(released, 1, "only the grant past its window settles");
+    assert_eq!(f.escrow.get_term(&due, &0).status, TermStatus::Released);
+    assert_eq!(f.escrow.get_term(&fresh, &0).status, TermStatus::Attested);
+}
+
+#[test]
+fn sweep_skips_unattested_cancelled_and_unknown_grants() {
+    let f = setup();
+    let due = f.create();
+    let unattested = f.create();
+    let cancelled = f.create();
+    f.escrow.attest_term(&due, &0);
+    f.advance(WINDOW + 1);
+    f.escrow.cancel_grant(&cancelled);
+
+    // 999 does not exist at all.
+    let released = f
+        .escrow
+        .sweep(&vec![&f.env, due, unattested, cancelled, 999]);
+
+    assert_eq!(released, 1);
+    assert_eq!(
+        f.escrow.get_term(&unattested, &0).status,
+        TermStatus::Pending
+    );
+    assert_eq!(
+        f.escrow.get_grant(&cancelled).status,
+        GrantStatus::Cancelled
+    );
+}
+
+/// The reason the cross-contract call goes through `try_`: a suspended
+/// institution makes `payout_of` trap, and that must not take the whole batch
+/// down with it.
+#[test]
+fn sweep_isolates_a_suspended_institution() {
+    let f = setup();
+    let blocked = f.create();
+    f.escrow.attest_term(&blocked, &0);
+    f.advance(WINDOW + 1);
+
+    // A second institution that is still in good standing.
+    let other_school = Address::generate(&f.env);
+    let other_payout = Address::generate(&f.env);
+    f.registry.register(
+        &other_school,
+        &other_payout,
+        &String::from_str(&f.env, "Second College"),
+        &String::from_str(&f.env, "NG"),
+    );
+    f.registry.verify(&other_school);
+    let healthy = f.escrow.create_grant(
+        &f.sponsor,
+        &f.beneficiary,
+        &other_school,
+        &f.token.address,
+        &TERM_AMOUNT,
+        &TERMS,
+    );
+    f.escrow.attest_term(&healthy, &0);
+    f.advance(WINDOW + 1);
+
+    // Fraud found at the first school after it had already attested.
+    f.registry.suspend(&f.institution);
+
+    let released = f.escrow.sweep(&vec![&f.env, blocked, healthy]);
+
+    assert_eq!(released, 1, "the healthy grant still settles");
+    assert_eq!(f.token.balance(&other_payout), TERM_AMOUNT);
+    // The suspended school is paid nothing and its term stays claimable.
+    assert_eq!(f.escrow.get_term(&blocked, &0).status, TermStatus::Attested);
+    assert_eq!(f.token.balance(&f.school_payout), 0);
+}
+
+#[test]
+fn sweep_rejects_an_oversized_batch() {
+    let f = setup();
+    let mut ids = soroban_sdk::Vec::new(&f.env);
+    for i in 0..=MAX_SWEEP as u64 {
+        ids.push_back(i);
+    }
+    let err = f.escrow.try_sweep(&ids).err().unwrap().unwrap();
+    assert_eq!(err, EscrowError::BatchTooLarge);
+}
+
+#[test]
+fn sweep_of_an_empty_batch_releases_nothing() {
+    let f = setup();
+    assert_eq!(f.escrow.sweep(&vec![&f.env]), 0);
+}
+
+#[test]
+fn sweep_completes_a_grant_on_its_final_term() {
+    let f = setup();
+    let grant_id = f.create();
+    // Settle every term but the last through the normal path.
+    for term in 0..TERMS - 1 {
+        f.attest_and_wait(grant_id, term);
+        f.escrow.release_term(&grant_id, &term);
+    }
+    f.attest_and_wait(grant_id, TERMS - 1);
+
+    assert_eq!(f.escrow.sweep(&vec![&f.env, grant_id]), 1);
+    assert_eq!(f.escrow.get_grant(&grant_id).status, GrantStatus::Completed);
+    assert_eq!(f.token.balance(&f.escrow.address), 0);
+}
+
+#[test]
+fn sweep_is_idempotent_once_settled() {
+    let f = setup();
+    let grant_id = f.create();
+    f.attest_and_wait(grant_id, 0);
+
+    assert_eq!(f.escrow.sweep(&vec![&f.env, grant_id]), 1);
+    // Nothing is attested now, so a repeat sweep pays nothing more.
+    assert_eq!(f.escrow.sweep(&vec![&f.env, grant_id]), 0);
+    assert_eq!(f.token.balance(&f.school_payout), TERM_AMOUNT);
 }

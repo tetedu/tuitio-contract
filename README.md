@@ -42,7 +42,9 @@ Pending ──attest──▶ Attested ──(dispute window closes)──▶ Re
   which is a real conflict of interest — the window plus sponsor dispute plus
   registry suspension are what constrain it.
 - **Release is permissionless** once the window closes, so nobody can stall an
-  owed payment by withholding a signature.
+  owed payment by withholding a signature. `sweep` settles a batch of due
+  grants in one transaction; entries that are not due — or whose institution
+  has since been suspended — are skipped rather than failing the batch.
 - **Cancellation** refunds every unsettled term, and is refused while a term
   is attested or disputed — the sponsor cannot pull funds out from under an
   open claim.
