@@ -103,3 +103,15 @@ pub struct GrantCompleted {
     pub grant_id: u64,
     pub terms_total: u32,
 }
+
+/// The escrow was configured. Records the registry it trusts and the dispute
+/// window it enforces, so both are auditable from the event log alone.
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EscrowInitialized {
+    #[topic]
+    pub admin: Address,
+    pub registry: Address,
+    pub dispute_window: u64,
+    pub initialized_at: u64,
+}

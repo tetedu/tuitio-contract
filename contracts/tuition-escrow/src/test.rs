@@ -5,7 +5,7 @@
 use super::*;
 use institution_registry::{InstitutionRegistry, InstitutionRegistryClient};
 use soroban_sdk::{
-    testutils::{Address as _, Ledger as _},
+    testutils::{Address as _, Events as _, Ledger as _},
     token, Address, Env, String,
 };
 
@@ -670,4 +670,19 @@ fn resolve_dispute_requires_the_admin_signature() {
     f.escrow.dispute_term(&grant_id, &0);
     f.env.set_auths(&[]);
     f.escrow.resolve_dispute(&grant_id, &0, &true);
+}
+
+#[test]
+fn initialize_emits_a_genesis_event() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let escrow = TuitionEscrowClient::new(&env, &env.register(TuitionEscrow, ()));
+
+    escrow.initialize(&Address::generate(&env), &Address::generate(&env), &WINDOW);
+
+    assert_eq!(
+        env.events().all().events().len(),
+        1,
+        "initialize should publish exactly one genesis event"
+    );
 }
