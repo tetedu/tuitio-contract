@@ -49,6 +49,12 @@ impl InstitutionRegistry {
         env.storage()
             .instance()
             .extend_ttl(INSTANCE_TTL_THRESHOLD, INSTANCE_TTL_EXTEND);
+
+        events::RegistryInitialized {
+            admin,
+            initialized_at: env.ledger().timestamp(),
+        }
+        .publish(&env);
         Ok(())
     }
 
