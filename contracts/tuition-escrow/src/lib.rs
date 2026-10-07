@@ -38,11 +38,15 @@ pub use errors::EscrowError;
 pub use registry::{RegistryClient, RegistryInterface};
 pub use types::{Config, DataKey, Grant, GrantStatus, Term, TermStatus};
 
-use soroban_sdk::{contract, contractimpl, token, Address, Env};
+use soroban_sdk::{contract, contractimpl, token, Address, Env, Vec};
 
 const DAY_IN_LEDGERS: u32 = 17_280;
 const INSTANCE_TTL_THRESHOLD: u32 = DAY_IN_LEDGERS * 30;
 const INSTANCE_TTL_EXTEND: u32 = DAY_IN_LEDGERS * 60;
+/// Most grants a single `sweep` will settle. Each one costs a grant read, a
+/// term read, a cross-contract call and a token transfer, so the cap keeps a
+/// batch inside the ledger's resource budget.
+const MAX_SWEEP: u32 = 20;
 /// Grants outlive the instance bump cadence; a multi-year degree is in scope.
 const ENTRY_TTL_THRESHOLD: u32 = DAY_IN_LEDGERS * 30;
 const ENTRY_TTL_EXTEND: u32 = DAY_IN_LEDGERS * 90;
@@ -246,6 +250,74 @@ impl TuitionEscrow {
         }
         .publish(&env);
         Ok(())
+    }
+
+    /// Settles every grant in `grant_ids` whose current term is attested and
+    /// past its dispute window.
+    ///
+    /// Permissionless, like [`Self::release_term`], and for the same reason: a
+    /// term that is owed should not wait on any particular party showing up.
+    /// This exists because releasing one term per transaction does not scale —
+    /// a sponsor funding twelve terms should not need twelve calls, and nor
+    /// should whoever keeps the protocol moving.
+    ///
+    /// Entries that are not due are skipped rather than failing the batch: a
+    /// grant that is cancelled, not yet attested, still inside its window, or
+    /// whose institution has since been suspended simply does not settle. One
+    /// bad entry cannot block the rest, which is the whole point of batching.
+    ///
+    /// Returns how many terms were released.
+    pub fn sweep(env: Env, grant_ids: Vec<u64>) -> Result<u32, EscrowError> {
+        let config = Self::config(&env)?;
+        if grant_ids.len() > MAX_SWEEP {
+            return Err(EscrowError::BatchTooLarge);
+        }
+
+        let now = env.ledger().timestamp();
+        let registry = RegistryClient::new(&env, &config.registry);
+        let mut released: u32 = 0;
+
+        for grant_id in grant_ids.iter() {
+            let mut grant = match Self::get_grant_or_err(&env, grant_id) {
+                Ok(g) => g,
+                Err(_) => continue,
+            };
+            if grant.status != GrantStatus::Active {
+                continue;
+            }
+            let term_index = grant.next_term;
+            if term_index >= grant.terms_total {
+                continue;
+            }
+            let mut term = Self::load_term(&env, grant_id, term_index);
+            if term.status != TermStatus::Attested || now < term.release_after {
+                continue;
+            }
+
+            // A suspended or deregistered institution makes `payout_of` trap.
+            // Calling it through `try_` keeps that failure local to this grant
+            // instead of reverting every settlement in the batch.
+            let payout = match registry.try_payout_of(&grant.institution) {
+                Ok(Ok(address)) => address,
+                _ => continue,
+            };
+
+            Self::pay(&env, &grant.token, &payout, grant.term_amount);
+            term.status = TermStatus::Released;
+            Self::put_term(&env, grant_id, term_index, &term);
+            Self::advance(&env, grant_id, &mut grant);
+
+            events::TermReleased {
+                grant_id,
+                term_index,
+                payout,
+                amount: grant.term_amount,
+            }
+            .publish(&env);
+            released += 1;
+        }
+
+        Ok(released)
     }
 
     /// Freezes an attested term before its window closes.
