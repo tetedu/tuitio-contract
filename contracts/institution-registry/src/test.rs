@@ -13,6 +13,24 @@ fn setup() -> (Env, InstitutionRegistryClient<'static>, Address) {
     (env, client, admin)
 }
 
+/// Registers a fresh institution and returns its address.
+fn register_named(
+    env: &Env,
+    client: &InstitutionRegistryClient,
+    name: &str,
+    country: &str,
+) -> Address {
+    let school = Address::generate(env);
+    let payout = Address::generate(env);
+    client.register(
+        &school,
+        &payout,
+        &String::from_str(env, name),
+        &String::from_str(env, country),
+    );
+    school
+}
+
 fn register_school(env: &Env, client: &InstitutionRegistryClient) -> (Address, Address) {
     let school = Address::generate(env);
     let payout = Address::generate(env);
@@ -206,4 +224,98 @@ fn count_tracks_registrations() {
     register_school(&env, &client);
     register_school(&env, &client);
     assert_eq!(client.count(), 3);
+}
+
+// ----- paginated listing ----------------------------------------------------
+
+#[test]
+fn list_returns_registration_order() {
+    let (env, client, _admin) = setup();
+    let first = register_named(&env, &client, "First College", "RW");
+    let second = register_named(&env, &client, "Second Institute", "NG");
+    let third = register_named(&env, &client, "Third Academy", "KE");
+
+    let page = client.list(&0, &10);
+    assert_eq!(page.len(), 3);
+    assert_eq!(page.get(0).unwrap(), first);
+    assert_eq!(page.get(1).unwrap(), second);
+    assert_eq!(page.get(2).unwrap(), third);
+}
+
+#[test]
+fn list_pages_through_the_registry() {
+    let (env, client, _admin) = setup();
+    let a = register_named(&env, &client, "A", "RW");
+    let b = register_named(&env, &client, "B", "RW");
+    let c = register_named(&env, &client, "C", "RW");
+
+    let first = client.list(&0, &2);
+    assert_eq!(first.len(), 2);
+    assert_eq!(first.get(0).unwrap(), a);
+    assert_eq!(first.get(1).unwrap(), b);
+
+    let second = client.list(&2, &2);
+    assert_eq!(second.len(), 1, "last page is short");
+    assert_eq!(second.get(0).unwrap(), c);
+}
+
+#[test]
+fn list_past_the_end_is_empty_not_an_error() {
+    let (env, client, _admin) = setup();
+    register_named(&env, &client, "Only", "RW");
+    assert_eq!(client.list(&1, &10).len(), 0);
+    assert_eq!(client.list(&99, &10).len(), 0);
+}
+
+#[test]
+fn list_on_an_empty_registry_is_empty() {
+    let (_env, client, _admin) = setup();
+    assert_eq!(client.list(&0, &10).len(), 0);
+}
+
+#[test]
+fn list_rejects_a_zero_limit() {
+    let (env, client, _admin) = setup();
+    register_named(&env, &client, "Only", "RW");
+    assert_eq!(client.list(&0, &0).len(), 0);
+}
+
+#[test]
+fn list_clamps_an_oversized_limit() {
+    let (env, client, _admin) = setup();
+    register_named(&env, &client, "A", "RW");
+    register_named(&env, &client, "B", "RW");
+
+    // Asking for more than MAX_PAGE must not error; it returns what exists.
+    let page = client.list(&0, &(MAX_PAGE + 5_000));
+    assert_eq!(page.len(), 2);
+}
+
+#[test]
+fn list_includes_unverified_and_suspended_institutions() {
+    let (env, client, _admin) = setup();
+    let pending = register_named(&env, &client, "Pending School", "RW");
+    let verified = register_named(&env, &client, "Verified School", "RW");
+    client.verify(&verified);
+    let suspended = register_named(&env, &client, "Suspended School", "RW");
+    client.verify(&suspended);
+    client.suspend(&suspended);
+
+    // list is an index of the registry, not a filter on status; callers decide
+    // what to do with each record.
+    let page = client.list(&0, &10);
+    assert_eq!(page.len(), 3);
+    assert_eq!(page.get(0).unwrap(), pending);
+    assert_eq!(page.get(1).unwrap(), verified);
+    assert_eq!(page.get(2).unwrap(), suspended);
+}
+
+#[test]
+fn list_agrees_with_count() {
+    let (env, client, _admin) = setup();
+    for _ in 0..5 {
+        register_named(&env, &client, "School", "RW");
+    }
+    assert_eq!(client.count(), 5);
+    assert_eq!(client.list(&0, &100).len(), client.count());
 }

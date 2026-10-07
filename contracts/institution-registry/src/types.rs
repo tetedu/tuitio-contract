@@ -39,9 +39,15 @@ pub enum DataKey {
     Institution(Address),
     /// Monotonic count of registered institutions.
     Count,
+    /// Institution address by registration position, so the registry can be
+    /// walked without loading every record.
+    InstitutionAt(u32),
 }
 
 /// Maximum accepted length for the `name` field, in bytes.
 pub const MAX_NAME_LEN: u32 = 128;
 /// Exact accepted length for the `country` field (ISO alpha-2), in bytes.
 pub const COUNTRY_LEN: u32 = 2;
+/// Largest page `list` will return, to keep a call inside the ledger's
+/// read budget regardless of what the caller asks for.
+pub const MAX_PAGE: u32 = 100;
