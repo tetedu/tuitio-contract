@@ -73,13 +73,21 @@ impl TuitionEscrow {
         env.storage().instance().set(
             &DataKey::Config,
             &Config {
-                admin,
-                registry,
+                admin: admin.clone(),
+                registry: registry.clone(),
                 dispute_window,
             },
         );
         env.storage().instance().set(&DataKey::NextGrantId, &0u64);
         Self::bump_instance(&env);
+
+        events::EscrowInitialized {
+            admin,
+            registry,
+            dispute_window,
+            initialized_at: env.ledger().timestamp(),
+        }
+        .publish(&env);
         Ok(())
     }
 

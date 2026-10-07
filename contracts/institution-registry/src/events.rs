@@ -53,3 +53,13 @@ pub struct AdminChanged {
     pub old_admin: Address,
     pub new_admin: Address,
 }
+
+/// The registry was configured. Gives indexers and explorers a genesis
+/// record rather than having to infer deployment from configuration.
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RegistryInitialized {
+    #[topic]
+    pub admin: Address,
+    pub initialized_at: u64,
+}

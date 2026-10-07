@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{testutils::Address as _, Env, String};
+use soroban_sdk::{testutils::Address as _, testutils::Events as _, Env, String};
 
 fn setup() -> (Env, InstitutionRegistryClient<'static>, Address) {
     let env = Env::default();
@@ -318,4 +318,23 @@ fn list_agrees_with_count() {
     }
     assert_eq!(client.count(), 5);
     assert_eq!(client.list(&0, &100).len(), client.count());
+}
+
+#[test]
+fn initialize_emits_a_genesis_event() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let id = env.register(InstitutionRegistry, ());
+    let client = InstitutionRegistryClient::new(&env, &id);
+
+    client.initialize(&admin);
+
+    // The registry's configuration must be recoverable from the event log
+    // alone, so an indexer never has to be told the admin out of band.
+    assert_eq!(
+        env.events().all().events().len(),
+        1,
+        "initialize should publish exactly one genesis event"
+    );
 }
