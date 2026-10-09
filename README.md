@@ -110,7 +110,7 @@ deployments/testnet.json          deployed contract addresses
 
 | Name | Role | Contact |
 |---|---|---|
-| [adelekevictor12](https://github.com/adelekevictor12) | Maintainer | adelekevat@gmail.com |
+| [temieehade-coder](https://github.com/temieehade-coder) | Maintainer | temieehade@gmail.com |
 
 ## Contributing
 

@@ -9,7 +9,7 @@ Registration is permissionless: any wallet can submit your institution's
 details, starting as `Pending`. To appear in the web app's grant flow you
 must be **`Verified`** — the registry admin reviews pending registrations
 (name, country, payout address) and promotes them. Contact the maintainer
-(adelekevat@gmail.com) for testnet verification.
+(temieehade@gmail.com) for testnet verification.
 
 Your registration carries two addresses:
 
