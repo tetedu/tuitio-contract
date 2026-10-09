@@ -14,3 +14,5 @@ soroban-sdk = { workspace = true }
 [dev-dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
 institution-registry = { path = "../institution-registry" }
+# Test-only: shrinks a failing action sequence to a minimal reproduction.
+proptest = "1"
