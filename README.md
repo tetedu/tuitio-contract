@@ -8,6 +8,8 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Network](https://img.shields.io/badge/network-Stellar%20testnet-7d00ff)](https://stellar.expert/explorer/testnet/contract/CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO)
 
+**Live demo:** <https://tuitio-frontend.vercel.app> (Stellar testnet, Freighter wallet)
+
 **Soroban contracts that hold a student's tuition in escrow and release it to a verified institution, one academic term at a time.**
 
 The problem: education money sent across borders leaks. A sponsor pays for a
@@ -82,7 +84,7 @@ Deployments are recorded in [`deployments/`](deployments/).
 Requires Rust 1.96+ with the `wasm32v1-none` target and the Stellar CLI 27+.
 
 ```bash
-cargo test                  # 52 tests across both contracts
+cargo test                  # unit + property tests, both contracts
 stellar contract build      # wasm artifacts into target/
 SOURCE=my-key ./scripts/deploy_testnet.sh   # deploy + initialize, in order
 ```
