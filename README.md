@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/tetedu/tuitio-contract/actions/workflows/ci.yml/badge.svg)](https://github.com/tetedu/tuitio-contract/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Network](https://img.shields.io/badge/network-Stellar%20testnet-7d00ff)](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+[![Network](https://img.shields.io/badge/network-Stellar%20testnet-7d00ff)](https://stellar.expert/explorer/testnet/contract/CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO)
 
 **Soroban contracts that hold a student's tuition in escrow and release it to a verified institution, one academic term at a time.**
 
@@ -53,25 +53,25 @@ Pending ──attest──▶ Attested ──(dispute window closes)──▶ Re
 
 | Contract | Address |
 |---|---|
-| institution-registry | `CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV` |
-| tuition-escrow | `CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW` |
+| institution-registry | `CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO` |
+| tuition-escrow | `CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34` |
 
 Verify them on-chain:
 
 - Raw indexer data (JSON, no JavaScript required) —
-  [registry](https://api.stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+  [registry](https://api.stellar.expert/explorer/testnet/contract/CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO)
   ·
-  [escrow](https://api.stellar.expert/explorer/testnet/contract/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW)
+  [escrow](https://api.stellar.expert/explorer/testnet/contract/CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34)
 - Block explorers —
-  [StellarChain registry](https://testnet.stellarchain.io/contracts/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+  [StellarChain registry](https://testnet.stellarchain.io/contracts/CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO)
   ·
-  [StellarChain escrow](https://testnet.stellarchain.io/contracts/CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW)
+  [StellarChain escrow](https://testnet.stellarchain.io/contracts/CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34)
   ·
-  [StellarExpert registry](https://stellar.expert/explorer/testnet/contract/CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV)
+  [StellarExpert registry](https://stellar.expert/explorer/testnet/contract/CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO)
 - Or query them directly:
 
 ```bash
-stellar contract invoke --id CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV \
+stellar contract invoke --id CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO \
   --source-account <your-key> --network testnet -- count
 ```
 

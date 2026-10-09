@@ -95,11 +95,11 @@ With the Stellar CLI (all commands need `--source-account` and
 
 ```bash
 # Read a grant
-stellar contract invoke --id CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW \
+stellar contract invoke --id CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34 \
   --source-account my-key --network testnet -- get_grant --grant_id 0
 
 # Attest a term (institution wallet)
-stellar contract invoke --id CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW \
+stellar contract invoke --id CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34 \
   --source-account school-key --network testnet --send=yes \
   -- attest_term --grant_id 0 --term_index 0
 ```
