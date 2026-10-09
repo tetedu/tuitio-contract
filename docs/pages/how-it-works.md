@@ -2,7 +2,7 @@
 
 ## The two contracts
 
-**Institution registry** (`CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV` on testnet)
+**Institution registry** (`CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO` on testnet)
 answers one question: is this address a legitimate tuition payee? Anyone can
 register; records start `Pending`. The registry admin — a verification role,
 deliberately separate from the escrow admin — promotes institutions to
@@ -10,7 +10,7 @@ deliberately separate from the escrow admin — promotes institutions to
 blocks new grants and makes the payout lookup trap, so a suspended school
 cannot be paid even for terms already attested.
 
-**Tuition escrow** (`CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW` on testnet)
+**Tuition escrow** (`CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34` on testnet)
 holds the funds and settles terms.
 
 ## Grant lifecycle

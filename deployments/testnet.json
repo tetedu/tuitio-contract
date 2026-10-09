@@ -1,10 +1,23 @@
 {
   "network": "testnet",
+  "version": "v0.2.0",
   "admin": "GCPYAUYJNA3FQDJBEKCVHAD5TQYLNIZVNQHVVB4ZLK76B4K3EQPLBLEH",
   "dispute_window_seconds": 604800,
   "contracts": {
-    "institution_registry": "CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV",
-    "tuition_escrow": "CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW"
+    "institution_registry": "CCTZVSPMIYEA4X2Z6UP5IPIO2HBIZWHLV37OUDBV32YUCP64JNIPBCPO",
+    "tuition_escrow": "CDPGTHO2O7LTURTJF7L7ZZZTZCXPNABAPGVRDMBYIJ737R6O3DOPWJ34"
   },
-  "deployed_at": "2026-09-03T14:54:33Z"
+  "token": {
+    "contract": "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
+    "symbol": "XLM",
+    "decimals": 7,
+    "note": "wrapped native XLM via the Stellar Asset Contract"
+  },
+  "deployed_at": "2026-10-09T12:08:18Z",
+  "supersedes": {
+    "version": "v0.1.0",
+    "institution_registry": "CD2INHSYNIQTVWM222CNSS7MN4MJSOBZOXVEWY3SOAK6MHICCZIEVQWV",
+    "tuition_escrow": "CDV7FA3QJPBR7LORHCZCZG6UCRL7DMXVMZYRDLMW7EXUNBMN7SEXINXW",
+    "note": "v0.1.0 lacks list(), sweep() and the initialize events; neither contract is upgradeable, so adding them required a fresh deployment"
+  }
 }

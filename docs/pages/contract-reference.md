@@ -43,6 +43,14 @@ otherwise. This is what the escrow calls before paying.
 ### `is_verified(institution: Address) -> bool`
 Read. `false` for unknown or non-verified addresses, never an error.
 
+### `list(start: u32, limit: u32) -> Vec<Address>`
+Read. Institution addresses in registration order. `start` is a registration
+position, not an id, and positions are append-only, so a page stays stable as
+the registry grows. `limit` is clamped to 100; a `start` past the end returns
+an empty vector rather than an error, so a caller can page until the result is
+short. Every record is indexed regardless of status — filtering is the
+caller's decision.
+
 ### `count() -> u32` · `admin() -> Result<Address, Error>`
 Reads.
 
@@ -75,6 +83,15 @@ Pays an attested term to the institution's registered payout address, once
 the dispute window has elapsed. Traps if the institution has been suspended
 since attestation. **Auth:** none — permissionless. Emits `term_released`.
 
+### `sweep(grant_ids: Vec<u64>) -> Result<u32, Error>`
+Settles every grant in the batch whose current term is attested and past its
+dispute window, returning how many were released. Permissionless, like
+`release_term`. Entries that are not due are skipped rather than failing the
+batch: cancelled grants, unattested or still-disputable terms, unknown ids,
+and institutions suspended after attesting — that last case would otherwise
+trap and revert every other settlement in the same transaction. Rejects a
+batch larger than 20 with `BatchTooLarge`.
+
 ### `dispute_term(grant_id: u64, term_index: u32) -> Result<(), Error>`
 Freezes an attested term before its window closes. **Auth:** the grant's
 sponsor. Emits `term_disputed`.
@@ -99,7 +116,7 @@ grant's sponsor. Emits `grant_cancelled`.
 
 ## Events
 
-Every state change emits a typed event (`institution_registered`,
+Every state change emits a typed event (`registry_initialized`, `escrow_initialized`, `institution_registered`,
 `grant_created`, `term_attested`, `term_released`, `term_disputed`,
 `dispute_resolved`, `term_refunded`, `grant_cancelled`, `grant_completed`,
 `institution_verified`, `institution_suspended`, `payout_updated`,
