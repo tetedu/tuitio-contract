@@ -38,4 +38,6 @@ pub enum EscrowError {
     SettlementInFlight = 16,
     /// The configured dispute window was zero.
     InvalidDisputeWindow = 17,
+    /// More grants were passed to `sweep` than one transaction can settle.
+    BatchTooLarge = 18,
 }
