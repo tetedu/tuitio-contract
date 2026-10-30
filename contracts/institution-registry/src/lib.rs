@@ -178,16 +178,68 @@ impl InstitutionRegistry {
         Ok(())
     }
 
-    /// Transfers registry administration.
+    /// Invites `new_admin` to take over registry administration.
+    ///
+    /// The role does not move here. It moves when `new_admin` calls
+    /// [`InstitutionRegistry::accept_admin`], which proves the address is
+    /// controlled by someone who can sign for it. Until then the current admin
+    /// keeps every power it had, so a mistyped address costs a second call
+    /// rather than the ability to verify and suspend institutions.
+    ///
+    /// Proposing again overwrites any outstanding invitation.
     ///
     /// Authorises: current registry admin.
-    pub fn set_admin(env: Env, new_admin: Address) -> Result<(), RegistryError> {
-        let old = Self::require_admin(&env)?;
-        env.storage().instance().set(&DataKey::Admin, &new_admin);
+    pub fn propose_admin(env: Env, new_admin: Address) -> Result<(), RegistryError> {
+        let current = Self::require_admin(&env)?;
+        env.storage()
+            .instance()
+            .set(&DataKey::PendingAdmin, &new_admin);
         Self::bump_instance(&env);
+
+        events::AdminProposed {
+            current_admin: current,
+            pending_admin: new_admin,
+        }
+        .publish(&env);
+        Ok(())
+    }
+
+    /// Withdraws an outstanding handover.
+    ///
+    /// Authorises: current registry admin.
+    pub fn cancel_admin_proposal(env: Env) -> Result<(), RegistryError> {
+        let current = Self::require_admin(&env)?;
+        let pending = Self::pending_or_err(&env)?;
+        env.storage().instance().remove(&DataKey::PendingAdmin);
+        Self::bump_instance(&env);
+
+        events::AdminProposalCancelled {
+            current_admin: current,
+            cancelled_admin: pending,
+        }
+        .publish(&env);
+        Ok(())
+    }
+
+    /// Completes a handover started by [`InstitutionRegistry::propose_admin`].
+    ///
+    /// Authorises: the proposed admin.
+    pub fn accept_admin(env: Env) -> Result<(), RegistryError> {
+        let pending = Self::pending_or_err(&env)?;
+        pending.require_auth();
+
+        let old: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(RegistryError::NotInitialized)?;
+        env.storage().instance().set(&DataKey::Admin, &pending);
+        env.storage().instance().remove(&DataKey::PendingAdmin);
+        Self::bump_instance(&env);
+
         events::AdminChanged {
             old_admin: old,
-            new_admin,
+            new_admin: pending,
         }
         .publish(&env);
         Ok(())
@@ -261,6 +313,12 @@ impl InstitutionRegistry {
             .ok_or(RegistryError::NotInitialized)
     }
 
+    /// Address with an outstanding invitation to take over administration,
+    /// or `None` when no handover is in flight.
+    pub fn pending_admin(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::PendingAdmin)
+    }
+
     // ----- internal helpers -------------------------------------------------
 
     fn require_init(env: &Env) -> Result<(), RegistryError> {
@@ -279,6 +337,13 @@ impl InstitutionRegistry {
             .ok_or(RegistryError::NotInitialized)?;
         admin.require_auth();
         Ok(admin)
+    }
+
+    fn pending_or_err(env: &Env) -> Result<Address, RegistryError> {
+        env.storage()
+            .instance()
+            .get(&DataKey::PendingAdmin)
+            .ok_or(RegistryError::NoPendingAdmin)
     }
 
     fn load(env: &Env, institution: &Address) -> Result<Institution, RegistryError> {

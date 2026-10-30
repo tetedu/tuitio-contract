@@ -46,7 +46,26 @@ pub struct PayoutUpdated {
     pub new_payout: Address,
 }
 
-/// Registry administration was transferred.
+/// The admin invited another address to take over administration. Nothing has
+/// changed hands yet — the role only moves once the invited address accepts.
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AdminProposed {
+    #[topic]
+    pub current_admin: Address,
+    pub pending_admin: Address,
+}
+
+/// The admin withdrew an outstanding handover before it was accepted.
+#[contractevent]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AdminProposalCancelled {
+    #[topic]
+    pub current_admin: Address,
+    pub cancelled_admin: Address,
+}
+
+/// Registry administration was transferred, after the incoming admin accepted.
 #[contractevent]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AdminChanged {

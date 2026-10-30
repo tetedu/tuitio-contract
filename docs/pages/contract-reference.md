@@ -6,7 +6,8 @@ enums; values below are the on-chain codes.
 ## institution-registry
 
 Errors: `AlreadyInitialized=1, NotInitialized=2, NotAdmin=3,
-InstitutionNotFound=4, InstitutionExists=5, InvalidStatus=6, InvalidMetadata=7`
+InstitutionNotFound=4, InstitutionExists=5, InvalidStatus=6, InvalidMetadata=7,
+NoPendingAdmin=8`
 
 ### `initialize(admin: Address) -> Result<(), Error>`
 Sets the registry admin. Callable once. **Auth:** none (deployment-time).
@@ -29,9 +30,21 @@ Emits `institution_suspended`.
 Rotate the address that receives tuition. **Auth:** the institution's own
 admin address. Emits `payout_updated`.
 
-### `set_admin(new_admin: Address) -> Result<(), Error>`
-Transfer registry administration. **Auth:** current admin. Emits
-`admin_changed`.
+### `propose_admin(new_admin: Address) -> Result<(), Error>`
+Invite `new_admin` to take over registry administration. The role does not
+move here: the current admin keeps every power until the invited address
+accepts, so a mistyped address costs a second call rather than the ability to
+verify and suspend institutions. Proposing again overwrites any outstanding
+invitation. **Auth:** current admin. Emits `admin_proposed`.
+
+### `accept_admin() -> Result<(), Error>`
+Complete a handover started by `propose_admin`. Traps with `NoPendingAdmin`
+when nothing is outstanding. **Auth:** the proposed admin — this is what proves
+the incoming address is signable. Emits `admin_changed`.
+
+### `cancel_admin_proposal() -> Result<(), Error>`
+Withdraw an outstanding handover. Traps with `NoPendingAdmin` when there is
+none. **Auth:** current admin. Emits `admin_proposal_cancelled`.
 
 ### `get_institution(institution: Address) -> Result<Institution, Error>`
 Read. Returns `{admin, payout, name, country, status, registered_at}`.
@@ -51,8 +64,8 @@ an empty vector rather than an error, so a caller can page until the result is
 short. Every record is indexed regardless of status — filtering is the
 caller's decision.
 
-### `count() -> u32` · `admin() -> Result<Address, Error>`
-Reads.
+### `count() -> u32` · `admin() -> Result<Address, Error>` · `pending_admin() -> Option<Address>`
+Reads. `pending_admin` is `None` when no handover is in flight.
 
 ## tuition-escrow
 
@@ -120,5 +133,5 @@ Every state change emits a typed event (`registry_initialized`, `escrow_initiali
 `grant_created`, `term_attested`, `term_released`, `term_disputed`,
 `dispute_resolved`, `term_refunded`, `grant_cancelled`, `grant_completed`,
 `institution_verified`, `institution_suspended`, `payout_updated`,
-`admin_changed`). The indexer decodes these to build the read model; field
+`admin_proposed`, `admin_proposal_cancelled`, `admin_changed`). The indexer decodes these to build the read model; field
 names in events are a public interface for downstream consumers.

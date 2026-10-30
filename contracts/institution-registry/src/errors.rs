@@ -18,4 +18,6 @@ pub enum RegistryError {
     InvalidStatus = 6,
     /// A supplied string field was empty or exceeded its maximum length.
     InvalidMetadata = 7,
+    /// No administration handover is outstanding.
+    NoPendingAdmin = 8,
 }
