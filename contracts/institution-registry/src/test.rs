@@ -1,7 +1,10 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{testutils::Address as _, testutils::Events as _, Env, String};
+use soroban_sdk::{
+    testutils::Address as _, testutils::Events as _, testutils::MockAuth,
+    testutils::MockAuthInvoke, Env, String, Vec,
+};
 
 fn setup() -> (Env, InstitutionRegistryClient<'static>, Address) {
     let env = Env::default();
@@ -207,14 +210,112 @@ fn is_verified_is_false_for_unknown_address() {
     assert!(!client.is_verified(&ghost));
 }
 
+// ----- two-step administration handover -------------------------------------
+
 #[test]
-fn set_admin_transfers_control() {
+fn proposing_an_admin_does_not_move_the_role() {
+    let (env, client, admin) = setup();
+    let incoming = Address::generate(&env);
+
+    client.propose_admin(&incoming);
+
+    assert_eq!(client.admin(), admin);
+    assert_eq!(client.pending_admin(), Some(incoming));
+}
+
+#[test]
+fn the_outgoing_admin_keeps_its_powers_until_acceptance() {
     let (env, client, _admin) = setup();
-    let new_admin = Address::generate(&env);
+    let (school, _payout) = register_school(&env, &client);
+    let incoming = Address::generate(&env);
 
-    client.set_admin(&new_admin);
+    client.propose_admin(&incoming);
 
-    assert_eq!(client.admin(), new_admin);
+    // Still the admin, so verification must still work.
+    client.verify(&school);
+    assert!(client.is_verified(&school));
+}
+
+#[test]
+fn accepting_transfers_control() {
+    let (env, client, _admin) = setup();
+    let incoming = Address::generate(&env);
+    client.propose_admin(&incoming);
+
+    client.accept_admin();
+
+    assert_eq!(client.admin(), incoming);
+    assert_eq!(client.pending_admin(), None);
+}
+
+#[test]
+fn an_address_that_was_not_proposed_cannot_accept() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let admin = Address::generate(&env);
+    let id = env.register(InstitutionRegistry, ());
+    let client = InstitutionRegistryClient::new(&env, &id);
+    client.initialize(&admin);
+    let incoming = Address::generate(&env);
+    client.propose_admin(&incoming);
+
+    // Authorise an unrelated address and nobody else. `accept_admin` requires
+    // the proposed address, so the handover must not complete.
+    let intruder = Address::generate(&env);
+    env.mock_auths(&[MockAuth {
+        address: &intruder,
+        invoke: &MockAuthInvoke {
+            contract: &id,
+            fn_name: "accept_admin",
+            args: Vec::new(&env),
+            sub_invokes: &[],
+        },
+    }]);
+
+    assert!(client.try_accept_admin().is_err());
+    assert_eq!(client.admin(), admin);
+    assert_eq!(client.pending_admin(), Some(incoming));
+}
+
+#[test]
+fn accepting_without_a_proposal_is_rejected() {
+    let (_env, client, _admin) = setup();
+    let err = client.try_accept_admin().err().unwrap().unwrap();
+    assert_eq!(err, RegistryError::NoPendingAdmin);
+}
+
+#[test]
+fn proposing_again_overwrites_the_pending_admin() {
+    let (env, client, _admin) = setup();
+    let first = Address::generate(&env);
+    let second = Address::generate(&env);
+
+    client.propose_admin(&first);
+    client.propose_admin(&second);
+    client.accept_admin();
+
+    assert_eq!(client.admin(), second);
+}
+
+#[test]
+fn the_admin_can_cancel_a_pending_handover() {
+    let (env, client, admin) = setup();
+    let incoming = Address::generate(&env);
+    client.propose_admin(&incoming);
+
+    client.cancel_admin_proposal();
+
+    assert_eq!(client.pending_admin(), None);
+    assert_eq!(client.admin(), admin);
+    let err = client.try_accept_admin().err().unwrap().unwrap();
+    assert_eq!(err, RegistryError::NoPendingAdmin);
+}
+
+#[test]
+fn cancelling_without_a_proposal_is_rejected() {
+    let (_env, client, _admin) = setup();
+    let err = client.try_cancel_admin_proposal().err().unwrap().unwrap();
+    assert_eq!(err, RegistryError::NoPendingAdmin);
 }
 
 #[test]

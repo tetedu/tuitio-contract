@@ -35,6 +35,8 @@ pub struct Institution {
 pub enum DataKey {
     /// Registry administrator address.
     Admin,
+    /// Address invited to take over administration, pending its acceptance.
+    PendingAdmin,
     /// Institution record, keyed by the institution's controlling address.
     Institution(Address),
     /// Monotonic count of registered institutions.

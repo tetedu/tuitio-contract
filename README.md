@@ -26,7 +26,9 @@ Two contracts, one dependency:
    legitimate tuition payee?* Registration is permissionless (records start
    `Pending`); only the registry admin promotes to `Verified`. Suspension
    blocks new grants and makes `payout_of` trap, so a suspended school cannot
-   be paid.
+   be paid. Administration itself hands over in two steps — `propose_admin`
+   then `accept_admin` from the incoming address — so a mistyped address
+   cannot strand the power to verify and suspend.
 2. **`tuition-escrow`** — holds funds and settles terms. Creating a grant
    transfers the **full commitment** (`term_amount × terms_total`) into the
    contract. The lifecycle per term:
